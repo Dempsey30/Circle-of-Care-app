@@ -1,0 +1,29 @@
+{
+  "test_summary": {
+    "total_tests": 3,
+    "passed_tests": 0,
+    "failed_tests": 3,
+    "success_rate": "0.0%",
+    "test_timestamp": "2025-09-24T23:51:15.711554"
+  },
+  "detailed_results": [
+    {
+      "test_name": "WebSocket Connection",
+      "success": false,
+      "details": "Connection error: BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'",
+      "timestamp": "2025-09-24T23:51:15.711130"
+    },
+    {
+      "test_name": "Multiple Connections",
+      "success": false,
+      "details": "Error: BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'",
+      "timestamp": "2025-09-24T23:51:15.711310"
+    },
+    {
+      "test_name": "Content Filtering",
+      "success": false,
+      "details": "Error: BaseEventLoop.create_connection() got an unexpected keyword argument 'timeout'",
+      "timestamp": "2025-09-24T23:51:15.711453"
+    }
+  ]
+}
