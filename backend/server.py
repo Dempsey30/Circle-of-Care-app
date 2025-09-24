@@ -361,8 +361,9 @@ async def process_session(x_session_id: Optional[str] = Header(None, alias="X-Se
         raise HTTPException(status_code=500, detail="Session processing failed")
 
 @api_router.post("/auth/logout")
-async def logout(session_token: Optional[str] = Cookie(None, alias="session_token")):
+async def logout(request: Request):
     """Logout user and clear session"""
+    session_token = request.cookies.get("session_token")
     if session_token:
         await db.sessions.delete_one({"session_token": session_token})
     
