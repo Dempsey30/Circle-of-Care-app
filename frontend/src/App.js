@@ -893,60 +893,96 @@ const Dashboard = () => {
               </Card>
             )}
 
-            {/* Live Chat Section */}
-            {showLiveChat && selectedCommunity && (
+            {/* Live Chat Section - Always Show When Community Selected */}
+            {selectedCommunity && (
               <Card data-testid="live-chat-section">
                 <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <MessageCircle className="h-5 w-5" />
-                    <span>Live Chat - {selectedCommunity.name}</span>
-                  </CardTitle>
-                  <CardDescription>Connect with peers in real-time • Monitored 24/7</CardDescription>
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle className="flex items-center space-x-2">
+                        <MessageCircle className="h-5 w-5" />
+                        <span>Live Community Chat</span>
+                        <Badge className="bg-green-100 text-green-800">Active</Badge>
+                      </CardTitle>
+                      <CardDescription>Connect with peers in {selectedCommunity.name} • Monitored 24/7</CardDescription>
+                    </div>
+                    <Button
+                      onClick={() => connectLiveChat(selectedCommunity.id)}
+                      variant="outline"
+                      size="sm"
+                      className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
+                    >
+                      {websocket ? 'Reconnect' : 'Connect'}
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-4 mb-4 max-h-64 overflow-y-auto border rounded-lg p-3 bg-slate-50">
-                    {liveChatHistory.map((msg, index) => (
-                      <div key={index} className={`text-sm ${msg.type === 'user_joined' || msg.type === 'user_left' ? 'text-center text-slate-500 italic' : ''}`}>
-                        {msg.type === 'message' && (
-                          <div className="flex items-start space-x-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback className="text-xs">{msg.user_name[0]}</AvatarFallback>
-                            </Avatar>
-                            <div>
-                              <span className="font-medium text-slate-700">{msg.user_name}: </span>
-                              <span className="text-slate-600">{msg.message}</span>
-                              <div className="text-xs text-slate-400">{new Date(msg.timestamp).toLocaleTimeString()}</div>
-                            </div>
-                          </div>
-                        )}
-                        {(msg.type === 'user_joined' || msg.type === 'user_left') && (
-                          <p>{msg.message}</p>
-                        )}
-                        {msg.type === 'moderation_warning' && (
-                          <div className="bg-yellow-100 border border-yellow-300 rounded p-2 text-yellow-800">
-                            <strong>Moderation:</strong> {msg.message}
-                          </div>
-                        )}
+                  {/* Chat History */}
+                  <div className="space-y-3 mb-4 max-h-64 overflow-y-auto border rounded-lg p-3 bg-slate-50" data-testid="live-chat-history">
+                    {liveChatHistory.length === 0 ? (
+                      <div className="text-center text-slate-500 py-4">
+                        <MessageCircle className="h-8 w-8 mx-auto mb-2 text-slate-400" />
+                        <p>Welcome to live chat! Click "Connect" to join the conversation.</p>
                       </div>
-                    ))}
+                    ) : (
+                      liveChatHistory.map((msg, index) => (
+                        <div key={index} className={`text-sm ${
+                          msg.type === 'system' ? 'text-center text-slate-500 italic' : 
+                          msg.type === 'error' ? 'text-center text-red-500' : 
+                          msg.type === 'warning' ? 'bg-yellow-100 p-2 rounded text-yellow-800' : ''
+                        }`}>
+                          {msg.type === 'message' && (
+                            <div className="flex items-start space-x-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback className="text-xs">{msg.user_name?.[0] || 'A'}</AvatarFallback>
+                              </Avatar>
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2">
+                                  <span className="font-medium text-slate-700">{msg.user_name || 'Anonymous'}:</span>
+                                  <span className="text-xs text-slate-400">{new Date(msg.timestamp).toLocaleTimeString()}</span>
+                                </div>
+                                <p className="text-slate-600 mt-1">{msg.message}</p>
+                              </div>
+                            </div>
+                          )}
+                          {(msg.type === 'system' || msg.type === 'error') && (
+                            <p className="py-1">{msg.message}</p>
+                          )}
+                          {msg.type === 'warning' && (
+                            <div className="font-medium">
+                              <Flag className="h-4 w-4 inline mr-2" />
+                              {msg.message}
+                            </div>
+                          )}
+                        </div>
+                      ))
+                    )}
                   </div>
+                  
+                  {/* Chat Input */}
                   <div className="flex space-x-2">
                     <Input
                       value={liveChatMessage}
                       onChange={(e) => setLiveChatMessage(e.target.value)}
-                      placeholder="Type your message to the community..."
+                      placeholder={websocket ? "Type your message to the community..." : "Click Connect to join the chat"}
                       onKeyPress={(e) => e.key === 'Enter' && sendLiveChatMessage()}
                       data-testid="live-chat-input"
                       className="flex-1"
+                      disabled={!websocket}
                     />
                     <Button 
                       onClick={sendLiveChatMessage} 
-                      disabled={!liveChatMessage.trim()}
+                      disabled={!websocket || !liveChatMessage.trim()}
                       data-testid="send-live-chat-btn"
                       className="bg-emerald-500 hover:bg-emerald-600 text-white"
                     >
                       Send
                     </Button>
+                  </div>
+                  
+                  <div className="mt-2 text-xs text-slate-500 text-center">
+                    <Shield className="h-3 w-3 inline mr-1" />
+                    Safe space • No politics • Respectful communication only
                   </div>
                 </CardContent>
               </Card>
