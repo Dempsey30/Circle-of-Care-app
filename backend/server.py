@@ -371,9 +371,9 @@ async def logout(session_token: Optional[str] = Cookie(None, alias="session_toke
     return response
 
 @api_router.get("/auth/me")
-async def get_current_user_info(current_user: Optional[User] = None):
+async def get_current_user_info(request: Request):
     """Get current user information"""
-    current_user = await get_current_user()
+    current_user = await get_current_user(request)
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return current_user
