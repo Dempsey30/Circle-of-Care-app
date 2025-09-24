@@ -258,8 +258,12 @@ async def moderate_content(content: str) -> Dict[str, Any]:
             return {"is_appropriate": False, "reason": "Potentially inappropriate content", "severity": "medium"}
         return {"is_appropriate": True, "reason": "Content check completed", "severity": "low"}
 
-async def get_current_user(session_token: Optional[str] = Cookie(None, alias="session_token")) -> Optional[User]:
+async def get_current_user(request: Request = None) -> Optional[User]:
     """Get current user from session token in cookie"""
+    if not request:
+        return None
+        
+    session_token = request.cookies.get("session_token")
     if not session_token:
         return None
     
