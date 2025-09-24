@@ -441,46 +441,62 @@ async def create_post(community_id: str, post_data: PostCreate, request: Request
     await db.posts.insert_one(post_dict)
     return new_post
 
-# Live Chat WebSocket
-@api_router.websocket("/chat/live/{community_id}")
+# Live Chat WebSocket - Simplified for better functionality
+@app.websocket("/ws/chat/{community_id}")
 async def websocket_endpoint(websocket: WebSocket, community_id: str):
-    # Basic auth check - in production, implement proper WebSocket auth
-    await manager.connect(websocket, f"user_{uuid.uuid4()}", "Anonymous User", community_id)
+    """Simplified WebSocket for live chat - accessible to all users"""
+    # Generate a temporary user identifier
+    temp_user_id = f"user_{uuid.uuid4().hex[:8]}"
+    temp_user_name = f"Member{uuid.uuid4().hex[:4]}"
+    
+    await manager.connect(websocket, temp_user_id, temp_user_name, community_id)
+    
     try:
         while True:
             data = await websocket.receive_text()
-            message_data = json.loads(data)
-            
-            # Moderate message
-            moderation = await moderate_content(message_data["message"])
-            if moderation["is_appropriate"]:
-                # Store message
-                chat_message = LiveChatMessage(
-                    community_id=community_id,
-                    user_id=message_data.get("user_id", "anonymous"),
-                    user_name=message_data.get("user_name", "Anonymous"),
-                    message=message_data["message"],
-                    is_anonymous=message_data.get("is_anonymous", True)
-                )
-                chat_dict = prepare_for_mongo(chat_message.dict())
-                await db.live_chat.insert_one(chat_dict)
+            try:
+                message_data = json.loads(data)
                 
-                # Broadcast to community
-                broadcast_message = {
-                    "type": "message",
-                    "id": chat_message.id,
-                    "user_name": chat_message.user_name if not chat_message.is_anonymous else "Anonymous",
-                    "message": chat_message.message,
-                    "timestamp": chat_message.created_at.isoformat(),
-                    "is_anonymous": chat_message.is_anonymous
-                }
-                await manager.broadcast_to_community(community_id, broadcast_message)
-            else:
-                # Send moderation warning to user
+                # Basic message validation
+                if "message" in message_data and message_data["message"].strip():
+                    # Simple content filter
+                    message_content = message_data["message"]
+                    
+                    # Block obvious inappropriate content
+                    blocked_words = ["politics", "trump", "biden", "election", "government"]
+                    if any(word.lower() in message_content.lower() for word in blocked_words):
+                        await websocket.send_text(json.dumps({
+                            "type": "warning",
+                            "message": "Political content is not allowed in our healing community."
+                        }))
+                        continue
+                    
+                    # Store message in database
+                    chat_message = LiveChatMessage(
+                        community_id=community_id,
+                        user_id=temp_user_id,
+                        user_name=message_data.get("user_name", temp_user_name),
+                        message=message_content,
+                        is_anonymous=message_data.get("is_anonymous", True)
+                    )
+                    chat_dict = prepare_for_mongo(chat_message.dict())
+                    await db.live_chat.insert_one(chat_dict)
+                    
+                    # Broadcast to community
+                    broadcast_message = {
+                        "type": "message",
+                        "id": chat_message.id,
+                        "user_name": chat_message.user_name if not chat_message.is_anonymous else f"Anonymous{temp_user_id[-4:]}",
+                        "message": chat_message.message,
+                        "timestamp": chat_message.created_at.isoformat(),
+                        "is_anonymous": chat_message.is_anonymous
+                    }
+                    await manager.broadcast_to_community(community_id, broadcast_message)
+                    
+            except json.JSONDecodeError:
                 await websocket.send_text(json.dumps({
-                    "type": "moderation_warning",
-                    "message": f"Message blocked: {moderation['reason']}",
-                    "severity": moderation["severity"]
+                    "type": "error",
+                    "message": "Invalid message format"
                 }))
                 
     except WebSocketDisconnect:
