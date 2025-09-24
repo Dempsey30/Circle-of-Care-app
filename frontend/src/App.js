@@ -589,28 +589,52 @@ const Dashboard = () => {
       websocket.close();
     }
 
+    // Use the correct WebSocket URL format
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${wsProtocol}//${window.location.host}${API}/chat/live/${communityId}`.replace('/api', '');
+    const wsHost = window.location.hostname;
+    const wsPort = window.location.protocol === 'https:' ? '443' : '3000';
+    const wsUrl = `${wsProtocol}//${wsHost}:${wsPort}/ws/chat/${communityId}`;
+    
+    console.log('Connecting to WebSocket:', wsUrl);
     
     const ws = new WebSocket(wsUrl);
     
     ws.onopen = () => {
       console.log('Connected to live chat');
       setWebsocket(ws);
+      setLiveChatHistory(prev => [...prev, {
+        type: 'system',
+        message: 'Connected to live chat! Welcome to the community.',
+        timestamp: new Date().toISOString()
+      }]);
     };
     
     ws.onmessage = (event) => {
-      const message = JSON.parse(event.data);
-      setLiveChatHistory(prev => [...prev, message]);
+      try {
+        const message = JSON.parse(event.data);
+        setLiveChatHistory(prev => [...prev, message]);
+      } catch (e) {
+        console.error('Failed to parse WebSocket message:', e);
+      }
     };
     
     ws.onclose = () => {
       console.log('Disconnected from live chat');
       setWebsocket(null);
+      setLiveChatHistory(prev => [...prev, {
+        type: 'system',
+        message: 'Disconnected from chat. Click "Live Chat" to reconnect.',
+        timestamp: new Date().toISOString()
+      }]);
     };
     
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      setLiveChatHistory(prev => [...prev, {
+        type: 'error',
+        message: 'Chat connection error. Trying to reconnect...',
+        timestamp: new Date().toISOString()
+      }]);
     };
   };
 
