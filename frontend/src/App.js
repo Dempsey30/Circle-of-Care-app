@@ -1083,6 +1083,70 @@ const Dashboard = () => {
         </div>
       </div>
 
+      {/* Create Post Dialog */}
+      <Dialog open={showCreatePost} onOpenChange={setShowCreatePost}>
+        <DialogContent data-testid="create-post-dialog" className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Share Your Story</DialogTitle>
+            <DialogDescription>
+              Create a post in {selectedCommunity?.name}. Your voice matters and can help others.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label htmlFor="post-title">Title</Label>
+              <Input
+                id="post-title"
+                value={newPostTitle}
+                onChange={(e) => setNewPostTitle(e.target.value)}
+                placeholder="What's on your mind?"
+                data-testid="post-title-input"
+              />
+            </div>
+            <div>
+              <Label htmlFor="post-content">Content</Label>
+              <Textarea
+                id="post-content"
+                value={newPostContent}
+                onChange={(e) => setNewPostContent(e.target.value)}
+                placeholder="Share your thoughts, experiences, or ask for support..."
+                rows={6}
+                data-testid="post-content-input"
+              />
+            </div>
+            <div className="text-sm text-slate-500">
+              <p>Community Guidelines:</p>
+              <ul className="list-disc list-inside mt-1">
+                <li>Be respectful and supportive</li>
+                <li>No politics or government discussions</li>
+                <li>Keep profanity to a minimum</li>
+                <li>This is a safe space for healing</li>
+              </ul>
+            </div>
+            <div className="flex justify-end space-x-2">
+              <Button 
+                variant="outline" 
+                onClick={() => {
+                  setShowCreatePost(false);
+                  setNewPostTitle("");
+                  setNewPostContent("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={createNewPost}
+                disabled={!newPostTitle.trim() || !newPostContent.trim()}
+                className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                data-testid="submit-post-btn"
+              >
+                Share Post
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* Panic Dialog */}
       <Dialog open={showPanicDialog} onOpenChange={setShowPanicDialog}>
         <DialogContent data-testid="panic-dialog" className="max-w-2xl">
