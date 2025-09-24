@@ -1,0 +1,90 @@
+{
+  "timestamp": "2025-09-24T23:11:46.799819",
+  "base_url": "https://traumabridge.preview.emergentagent.com",
+  "total_tests": 10,
+  "passed_tests": 7,
+  "success_rate": 70.0,
+  "critical_failures": [
+    "Panic Button Response",
+    "AI Chat Authentication Check",
+    "WebSocket Endpoint Availability"
+  ],
+  "test_details": [
+    {
+      "test": "Root Endpoint",
+      "success": true,
+      "details": "Status: 200",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:20.343150"
+    },
+    {
+      "test": "Health Check",
+      "success": true,
+      "details": "Status: 200",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:20.391713"
+    },
+    {
+      "test": "Panic Button Response",
+      "success": false,
+      "details": "Request timeout - critical issue for crisis support",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:30.402711"
+    },
+    {
+      "test": "AI Chat Authentication Check",
+      "success": false,
+      "details": "Error: HTTPSConnectionPool(host='traumabridge.preview.emergentagent.com', port=443): Read timed out. (read timeout=10)",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:40.458277"
+    },
+    {
+      "test": "Communities Endpoint",
+      "success": true,
+      "details": "Status: 200, Communities found: 6, Expected types found: 5/6",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:46.639016"
+    },
+    {
+      "test": "Community Posts",
+      "success": true,
+      "details": "Status: 200, Posts: 0",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:46.687264"
+    },
+    {
+      "test": "Contact Info Endpoint",
+      "success": true,
+      "details": "Status: 200, Email: True, Phone: True, Creator: True",
+      "response_data": {
+        "creator": "Brent Dempsey",
+        "email": "circleofcaresupport@pm.me",
+        "phone": "250-902-9869",
+        "support": "24/7 monitoring and support available",
+        "security": "Platform monitored 24/7 for safety and security"
+      },
+      "timestamp": "2025-09-24T23:11:46.695947"
+    },
+    {
+      "test": "Session Without Header",
+      "success": true,
+      "details": "Properly rejects missing X-Session-ID (400)",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:46.704358"
+    },
+    {
+      "test": "Auth Me Without Token",
+      "success": true,
+      "details": "Properly requires authentication (401)",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:46.751272"
+    },
+    {
+      "test": "WebSocket Endpoint Availability",
+      "success": false,
+      "details": "WebSocket endpoint not found (404)",
+      "response_data": null,
+      "timestamp": "2025-09-24T23:11:46.799749"
+    }
+  ]
+}
