@@ -39,8 +39,8 @@ class WebSocketTester:
         try:
             print(f"📍 Connecting to: {ws_url}")
             
-            # Try to connect with timeout
-            async with websockets.connect(ws_url, timeout=10) as websocket:
+            # Try to connect
+            async with websockets.connect(ws_url) as websocket:
                 self.log_test("WebSocket Connection", True, "Successfully connected")
                 
                 # Test sending a message
@@ -84,8 +84,8 @@ class WebSocketTester:
         
         try:
             # Create two connections
-            async with websockets.connect(ws_url, timeout=10) as ws1, \
-                       websockets.connect(ws_url, timeout=10) as ws2:
+            async with websockets.connect(ws_url) as ws1, \
+                       websockets.connect(ws_url) as ws2:
                 
                 self.log_test("Multiple Connections", True, "Two connections established")
                 
@@ -122,7 +122,7 @@ class WebSocketTester:
         ws_url = f"wss://{self.base_url}/ws/chat/{test_community_id}"
         
         try:
-            async with websockets.connect(ws_url, timeout=10) as websocket:
+            async with websockets.connect(ws_url) as websocket:
                 
                 # Test blocked content (politics)
                 blocked_message = {
