@@ -47,7 +47,7 @@ const Website = () => {
             </div>
 
             <div className="md:hidden">
-              <Button variant="ghost" onClick={() => setIsMenuOpen(!isMenuOpen)}>
+              <Button variant="ghost" onClick={() => setIsMenuOpen(!isMenuOpen)} data-testid="mobile-menu-toggle">
                 {isMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
               </Button>
             </div>
