@@ -540,15 +540,18 @@ async def chat_with_ai(chat_request: ChatRequest, request: Request):
         user_message = UserMessage(text=chat_request.message)
         response = await chat.send_message(user_message)
         
-        # Store chat in database
-        chat_message = ChatMessage(
-            user_id=current_user.id,
-            message=chat_request.message,
-            response=response,
-            session_id=f"user_{current_user.id}_{uuid.uuid4()}"
-        )
-        chat_dict = prepare_for_mongo(chat_message.dict())
-        await db.chat_history.insert_one(chat_dict)
+        # Store chat in database (don't block on this)
+        try:
+            chat_message = ChatMessage(
+                user_id=current_user.id,
+                message=chat_request.message,
+                response=response,
+                session_id=f"user_{current_user.id}_{uuid.uuid4()}"
+            )
+            chat_dict = prepare_for_mongo(chat_message.dict())
+            await db.chat_history.insert_one(chat_dict)
+        except Exception as e:
+            logging.warning(f"Failed to store chat message: {e}")
         
         return {"response": response, "is_panic_response": chat_request.is_panic}
         
