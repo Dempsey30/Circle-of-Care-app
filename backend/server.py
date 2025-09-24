@@ -182,7 +182,6 @@ class CommunityCreate(BaseModel):
     category: str
 
 class PostCreate(BaseModel):
-    community_id: str
     title: str
     content: str
     is_anonymous: bool = False
