@@ -644,9 +644,9 @@ async def panic_button(panic_request: PanicButtonRequest):
 
 # Moderation Endpoints
 @api_router.post("/moderation/report")
-async def report_content(report_data: Dict):
+async def report_content(report_data: Dict, request: Request):
     """Report inappropriate content or behavior"""
-    current_user = await get_current_user()
+    current_user = await get_current_user(request)
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
