@@ -114,7 +114,7 @@ const Website = () => {
               <div className="relative z-10 rounded-2xl overflow-hidden shadow-2xl">
                 <img 
                   src="https://images.unsplash.com/photo-1604881991720-f91add269bed?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2Nzh8MHwxfHNlYXJjaHwxfHxtZW50YWwlMjBoZWFsdGglMjBzdXBwb3J0fGVufDB8fHx8MTc1ODc1MzA2Nnww&ixlib=rb-4.1.0&q=85"
-                  alt="Supportive hands together"
+                  alt="Supportive hands together representing community care and healing"
                   className="w-full h-96 object-cover"
                 />
               </div>
