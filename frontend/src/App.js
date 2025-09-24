@@ -528,6 +528,9 @@ const Dashboard = () => {
   const [liveChatHistory, setLiveChatHistory] = useState([]);
   const [showLiveChat, setShowLiveChat] = useState(false);
   const [websocket, setWebsocket] = useState(null);
+  const [showCreatePost, setShowCreatePost] = useState(false);
+  const [newPostTitle, setNewPostTitle] = useState("");
+  const [newPostContent, setNewPostContent] = useState("");
 
   // Handle Emergent Auth session
   useEffect(() => {
