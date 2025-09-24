@@ -656,14 +656,46 @@ const Dashboard = () => {
   const sendLiveChatMessage = () => {
     if (websocket && liveChatMessage.trim()) {
       const messageData = {
-        user_id: user.id,
-        user_name: user.display_name || user.name,
         message: liveChatMessage,
+        user_name: user?.display_name || user?.name || 'Anonymous',
         is_anonymous: false
       };
       
+      console.log('Sending message:', messageData);
       websocket.send(JSON.stringify(messageData));
       setLiveChatMessage("");
+    }
+  };
+
+  const createNewPost = async () => {
+    if (!selectedCommunity || !newPostTitle.trim() || !newPostContent.trim()) {
+      return;
+    }
+
+    try {
+      const postData = {
+        title: newPostTitle,
+        content: newPostContent,
+        is_anonymous: false,
+        support_type: "general"
+      };
+
+      const response = await axios.post(
+        `${API}/communities/${selectedCommunity.id}/posts`, 
+        postData,
+        { withCredentials: true }
+      );
+
+      // Add the new post to the list
+      setPosts(prev => [response.data, ...prev]);
+      setNewPostTitle("");
+      setNewPostContent("");
+      setShowCreatePost(false);
+      
+      console.log('Post created successfully');
+    } catch (error) {
+      console.error('Error creating post:', error);
+      alert('Failed to create post. Please try again.');
     }
   };
 
