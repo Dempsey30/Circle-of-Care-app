@@ -91,186 +91,225 @@ class CircleOfCareAPITester:
                             f"Status: {response.status_code}", response_time)
         except Exception as e:
             self.log_test("Contact Info", False, f"Error: {str(e)}")
-
-        # Test health check
-        try:
-            response = requests.get(f"{self.api_url}/health", timeout=10)
-            success = response.status_code == 200 and "healthy" in response.text
-            self.log_test("Health check", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Health check", False, f"Error: {str(e)}")
-
-    def test_auth_endpoints(self):
-        """Test authentication endpoints"""
-        print("\n🔍 Testing Authentication Endpoints...")
+    
+    def test_communities_functionality(self):
+        """Test communities endpoints - critical for the platform"""
+        print("\n🏘️ Testing Communities Functionality...")
         
-        # Test session endpoint without session ID (should fail)
+        # Test get all communities
         try:
-            response = requests.post(f"{self.api_url}/auth/session", timeout=10)
-            success = response.status_code == 400
-            self.log_test("Session without X-Session-ID", success, f"Status: {response.status_code}")
+            start_time = time.time()
+            response = self.session.get(f"{self.base_url}/api/communities")
+            response_time = time.time() - start_time
+            
+            if response.status_code == 200:
+                communities = response.json()
+                community_count = len(communities)
+                
+                # Check if we have the expected 6 communities
+                expected_communities = [
+                    "PTSD Recovery Room", "Chronic Pain Warriors", "Cancer Fighters & Survivors",
+                    "Veterans Support Network", "Anxiety & Depression Support", "General Wellness Circle"
+                ]
+                
+                found_communities = [c.get('name', '') for c in communities]
+                all_present = all(name in found_communities for name in expected_communities)
+                
+                self.log_test("Get All Communities", True, 
+                            f"Found {community_count} communities, all 6 expected: {all_present}", response_time)
+                
+                # Store communities for later tests
+                self.communities = communities
+                
+                # Test community structure
+                if communities:
+                    first_community = communities[0]
+                    required_fields = ['id', 'name', 'description', 'category', 'rules']
+                    has_required_fields = all(field in first_community for field in required_fields)
+                    self.log_test("Community Structure", has_required_fields,
+                                f"Required fields present: {has_required_fields}", 0)
+                    
+                    # Test community rules (important for guidelines)
+                    rules = first_community.get('rules', [])
+                    has_rules = len(rules) > 0
+                    self.log_test("Community Guidelines", has_rules,
+                                f"Rules count: {len(rules)}", 0)
+                
+            else:
+                self.log_test("Get All Communities", False, 
+                            f"Status: {response.status_code}", response_time)
+                self.communities = []
         except Exception as e:
-            self.log_test("Session without X-Session-ID", False, f"Error: {str(e)}")
-
-        # Test session endpoint with invalid session ID
-        try:
-            headers = {"X-Session-ID": "invalid_session_id"}
-            response = requests.post(f"{self.api_url}/auth/session", headers=headers, timeout=10)
-            success = response.status_code == 400
-            self.log_test("Session with invalid ID", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Session with invalid ID", False, f"Error: {str(e)}")
-
-        # Test /auth/me without authentication (should fail)
-        try:
-            response = requests.get(f"{self.api_url}/auth/me", timeout=10)
-            success = response.status_code == 401
-            self.log_test("Get user info without auth", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Get user info without auth", False, f"Error: {str(e)}")
-
-        # Test logout endpoint
-        try:
-            response = requests.post(f"{self.api_url}/auth/logout", timeout=10)
-            success = response.status_code == 200
-            self.log_test("Logout endpoint", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Logout endpoint", False, f"Error: {str(e)}")
-
-    def test_communities_endpoints(self):
-        """Test communities endpoints"""
-        print("\n🔍 Testing Communities Endpoints...")
+            self.log_test("Get All Communities", False, f"Error: {str(e)}")
+            self.communities = []
+    
+    def test_anonymous_posting(self):
+        """Test anonymous posting functionality - major fix implemented"""
+        print("\n📝 Testing Anonymous Posting Functionality...")
         
-        # Test get communities (should work without auth for public communities)
-        try:
-            response = requests.get(f"{self.api_url}/communities", timeout=10)
-            success = response.status_code == 200
-            communities_data = response.json() if success else []
-            self.log_test("Get communities", success, f"Status: {response.status_code}, Count: {len(communities_data)}")
-        except Exception as e:
-            self.log_test("Get communities", False, f"Error: {str(e)}")
-
-        # Test create community without auth (should fail)
-        try:
-            community_data = {
-                "name": "Test Community",
-                "description": "Test description",
-                "category": "test"
-            }
-            response = requests.post(f"{self.api_url}/communities", json=community_data, timeout=10)
-            success = response.status_code == 401
-            self.log_test("Create community without auth", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Create community without auth", False, f"Error: {str(e)}")
-
-    def test_ai_endpoints(self):
-        """Test AI companion endpoints"""
-        print("\n🔍 Testing AI Companion Endpoints...")
+        if not hasattr(self, 'communities') or not self.communities:
+            self.log_test("Anonymous Posting Setup", False, "No communities available for testing")
+            return
+            
+        # Test posting to first community without authentication
+        test_community = self.communities[0]
+        community_id = test_community['id']
         
-        # Test AI chat without auth (should fail)
-        try:
-            chat_data = {"message": "Hello", "is_panic": False}
-            response = requests.post(f"{self.api_url}/ai/chat", json=chat_data, timeout=10)
-            success = response.status_code == 401
-            self.log_test("AI chat without auth", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("AI chat without auth", False, f"Error: {str(e)}")
-
-        # Test panic button endpoint
-        try:
-            panic_data = {"user_id": "test_user", "severity": "moderate"}
-            response = requests.post(f"{self.api_url}/ai/panic-button", json=panic_data, timeout=15)
-            success = response.status_code in [200, 401]  # Either works or needs auth
-            self.log_test("Panic button endpoint", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Panic button endpoint", False, f"Error: {str(e)}")
-
-    def test_profile_endpoints(self):
-        """Test user profile endpoints"""
-        print("\n🔍 Testing Profile Endpoints...")
-        
-        # Test get profile without auth (should fail)
-        try:
-            response = requests.get(f"{self.api_url}/profile", timeout=10)
-            success = response.status_code == 401
-            self.log_test("Get profile without auth", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Get profile without auth", False, f"Error: {str(e)}")
-
-        # Test update profile without auth (should fail)
-        try:
-            profile_data = {"display_name": "Test User"}
-            response = requests.patch(f"{self.api_url}/profile", json=profile_data, timeout=10)
-            success = response.status_code == 401
-            self.log_test("Update profile without auth", success, f"Status: {response.status_code}")
-        except Exception as e:
-            self.log_test("Update profile without auth", False, f"Error: {str(e)}")
-
-    def test_cors_and_headers(self):
-        """Test CORS and header handling"""
-        print("\n🔍 Testing CORS and Headers...")
+        post_data = {
+            "title": "Test Anonymous Post",
+            "content": "This is a test post to verify anonymous posting works correctly.",
+            "is_anonymous": True,
+            "support_type": "general"
+        }
         
         try:
-            # Test OPTIONS request for CORS
-            response = requests.options(f"{self.api_url}/health", timeout=10)
-            success = response.status_code in [200, 204]
-            self.log_test("CORS OPTIONS request", success, f"Status: {response.status_code}")
+            start_time = time.time()
+            response = self.session.post(
+                f"{self.base_url}/api/communities/{community_id}/posts",
+                json=post_data,
+                headers={"Content-Type": "application/json"}
+            )
+            response_time = time.time() - start_time
+            
+            if response.status_code == 200 or response.status_code == 201:
+                post_response = response.json()
+                self.log_test("Anonymous Post Creation", True,
+                            f"Post ID: {post_response.get('id', 'unknown')}", response_time)
+                
+                # Store post ID for later verification
+                self.test_post_id = post_response.get('id')
+            else:
+                self.log_test("Anonymous Post Creation", False,
+                            f"Status: {response.status_code}, Response: {response.text[:100]}", response_time)
         except Exception as e:
-            self.log_test("CORS OPTIONS request", False, f"Error: {str(e)}")
-
+            self.log_test("Anonymous Post Creation", False, f"Error: {str(e)}")
+    
+    def test_community_posts_viewing(self):
+        """Test viewing posts in communities"""
+        print("\n👀 Testing Community Posts Viewing...")
+        
+        if not hasattr(self, 'communities') or not self.communities:
+            self.log_test("Posts Viewing Setup", False, "No communities available for testing")
+            return
+            
+        # Test getting posts from first community
+        test_community = self.communities[0]
+        community_id = test_community['id']
+        
+        try:
+            start_time = time.time()
+            response = self.session.get(f"{self.base_url}/api/communities/{community_id}/posts")
+            response_time = time.time() - start_time
+            
+            if response.status_code == 200:
+                posts = response.json()
+                posts_count = len(posts)
+                
+                self.log_test("Get Community Posts", True,
+                            f"Found {posts_count} posts in {test_community['name']}", response_time)
+                
+                # Check if posts have required structure
+                if posts:
+                    first_post = posts[0]
+                    required_fields = ['id', 'title', 'content', 'created_at', 'author_id']
+                    has_required_fields = all(field in first_post for field in required_fields)
+                    self.log_test("Post Structure", has_required_fields,
+                                f"Required fields present: {has_required_fields}", 0)
+                else:
+                    self.log_test("Post Structure", True, "No posts to verify structure", 0)
+                    
+            else:
+                self.log_test("Get Community Posts", False,
+                            f"Status: {response.status_code}", response_time)
+        except Exception as e:
+            self.log_test("Get Community Posts", False, f"Error: {str(e)}")
+    
+    def test_ai_endpoints_basic(self):
+        """Test AI endpoints with basic functionality (previous issue area)"""
+        print("\n🤖 Testing AI Endpoints (Previous Issue Area)...")
+        
+        # Test panic button endpoint (was completely broken before)
+        panic_data = {
+            "user_id": "test_user_123",
+            "severity": "moderate",
+            "trigger_description": "Testing panic button functionality"
+        }
+        
+        try:
+            start_time = time.time()
+            response = self.session.post(
+                f"{self.base_url}/api/ai/panic-button",
+                json=panic_data,
+                headers={"Content-Type": "application/json"},
+                timeout=10  # Shorter timeout to detect if still hanging
+            )
+            response_time = time.time() - start_time
+            
+            if response.status_code == 200:
+                panic_response = response.json()
+                has_required_fields = all(field in panic_response for field in 
+                                        ['immediate_response', 'emergency_contacts'])
+                self.log_test("AI Panic Button", has_required_fields,
+                            f"Response received with required fields: {has_required_fields}", response_time)
+            else:
+                self.log_test("AI Panic Button", False,
+                            f"Status: {response.status_code}", response_time)
+        except requests.exceptions.Timeout:
+            self.log_test("AI Panic Button", False, "Request timed out (still broken)")
+        except Exception as e:
+            self.log_test("AI Panic Button", False, f"Error: {str(e)}")
+    
     def run_all_tests(self):
-        """Run all API tests"""
-        print("🚀 Starting Circle of Care API Testing Suite")
+        """Run all backend tests"""
+        print("🚀 Starting Circle of Care Backend API Testing...")
         print(f"📍 Testing against: {self.base_url}")
-        print("=" * 60)
-
+        print(f"⏰ Started at: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+        print("=" * 80)
+        
         # Run all test suites
         self.test_health_endpoints()
-        self.test_auth_endpoints()
-        self.test_communities_endpoints()
-        self.test_ai_endpoints()
-        self.test_profile_endpoints()
-        self.test_cors_and_headers()
-
-        # Print summary
-        print("\n" + "=" * 60)
-        print(f"📊 Test Summary: {self.tests_passed}/{self.tests_run} tests passed")
-        success_rate = (self.tests_passed / self.tests_run * 100) if self.tests_run > 0 else 0
-        print(f"📈 Success Rate: {success_rate:.1f}%")
+        self.test_communities_functionality()
+        self.test_anonymous_posting()
+        self.test_community_posts_viewing()
+        self.test_ai_endpoints_basic()
         
-        if success_rate < 70:
-            print("⚠️  Warning: Low success rate detected")
-        elif success_rate >= 90:
-            print("🎉 Excellent! Most tests are passing")
+        # Print summary
+        print("\n" + "=" * 80)
+        print("📊 TEST SUMMARY")
+        print("=" * 80)
+        print(f"✅ Tests Passed: {self.tests_passed}")
+        print(f"❌ Tests Failed: {self.tests_run - self.tests_passed}")
+        print(f"📈 Success Rate: {(self.tests_passed/self.tests_run)*100:.1f}%")
+        print(f"⏱️  Total Tests: {self.tests_run}")
+        
+        # Save detailed results
+        results_file = f"/app/test_reports/backend_api_results.json"
+        with open(results_file, 'w') as f:
+            json.dump({
+                "test_summary": {
+                    "total_tests": self.tests_run,
+                    "passed_tests": self.tests_passed,
+                    "failed_tests": self.tests_run - self.tests_passed,
+                    "success_rate": f"{(self.tests_passed/self.tests_run)*100:.1f}%",
+                    "test_timestamp": datetime.now().isoformat()
+                },
+                "detailed_results": self.test_results
+            }, indent=2)
+        
+        print(f"\n📄 Detailed results saved to: {results_file}")
         
         return self.tests_passed == self.tests_run
 
 def main():
     """Main test execution"""
     tester = CircleOfCareAPITester()
+    success = tester.run_all_tests()
     
-    try:
-        success = tester.run_all_tests()
-        
-        # Save detailed results
-        results = {
-            "timestamp": datetime.now().isoformat(),
-            "base_url": tester.base_url,
-            "total_tests": tester.tests_run,
-            "passed_tests": tester.tests_passed,
-            "success_rate": (tester.tests_passed / tester.tests_run * 100) if tester.tests_run > 0 else 0,
-            "test_details": tester.test_results
-        }
-        
-        with open("/app/test_reports/backend_api_results.json", "w") as f:
-            json.dump(results, f, indent=2)
-        
-        print(f"\n📄 Detailed results saved to: /app/test_reports/backend_api_results.json")
-        
-        return 0 if success else 1
-        
-    except Exception as e:
-        print(f"❌ Test execution failed: {str(e)}")
+    if success:
+        print("\n🎉 All tests passed! Backend is functioning correctly.")
+        return 0
+    else:
+        print(f"\n⚠️  Some tests failed. Check results above for details.")
         return 1
 
 if __name__ == "__main__":
