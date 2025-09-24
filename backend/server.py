@@ -386,9 +386,9 @@ async def get_communities():
     return [Community(**parse_from_mongo(community)) for community in communities]
 
 @api_router.post("/communities", response_model=Community)
-async def create_community(community_data: CommunityCreate):
+async def create_community(community_data: CommunityCreate, request: Request):
     """Create a new community"""
-    current_user = await get_current_user()
+    current_user = await get_current_user(request)
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
