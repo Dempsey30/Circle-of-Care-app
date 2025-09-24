@@ -810,17 +810,6 @@ const Dashboard = () => {
             </div>
 
             <div className="flex items-center space-x-4">
-              {/* Live Chat Toggle */}
-              <Button
-                onClick={() => setShowLiveChat(!showLiveChat)}
-                variant="outline"
-                size="sm"
-                className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
-              >
-                <MessageCircle className="h-4 w-4 mr-2" />
-                Live Chat
-              </Button>
-
               {/* Panic Button */}
               <Button
                 onClick={handlePanicButton}
