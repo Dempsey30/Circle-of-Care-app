@@ -284,17 +284,18 @@ class CircleOfCareAPITester:
         
         # Save detailed results
         results_file = f"/app/test_reports/backend_api_results.json"
+        results_data = {
+            "test_summary": {
+                "total_tests": self.tests_run,
+                "passed_tests": self.tests_passed,
+                "failed_tests": self.tests_run - self.tests_passed,
+                "success_rate": f"{(self.tests_passed/self.tests_run)*100:.1f}%",
+                "test_timestamp": datetime.now().isoformat()
+            },
+            "detailed_results": self.test_results
+        }
         with open(results_file, 'w') as f:
-            json.dump({
-                "test_summary": {
-                    "total_tests": self.tests_run,
-                    "passed_tests": self.tests_passed,
-                    "failed_tests": self.tests_run - self.tests_passed,
-                    "success_rate": f"{(self.tests_passed/self.tests_run)*100:.1f}%",
-                    "test_timestamp": datetime.now().isoformat()
-                },
-                "detailed_results": self.test_results
-            }, indent=2)
+            json.dump(results_data, f, indent=2)
         
         print(f"\n📄 Detailed results saved to: {results_file}")
         
