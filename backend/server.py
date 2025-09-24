@@ -494,9 +494,9 @@ async def websocket_endpoint(websocket: WebSocket, community_id: str):
 
 # AI Companion Endpoints
 @api_router.post("/ai/chat")
-async def chat_with_ai(chat_request: ChatRequest):
+async def chat_with_ai(chat_request: ChatRequest, request: Request):
     """Chat with AI mental health companion"""
-    current_user = await get_current_user()
+    current_user = await get_current_user(request)
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
