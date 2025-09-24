@@ -665,17 +665,17 @@ async def report_content(report_data: Dict, request: Request):
 
 # User Profile Endpoints
 @api_router.get("/profile")
-async def get_profile():
+async def get_profile(request: Request):
     """Get current user's profile"""
-    current_user = await get_current_user()
+    current_user = await get_current_user(request)
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return current_user
 
 @api_router.patch("/profile")
-async def update_profile(profile_data: dict):
+async def update_profile(profile_data: dict, request: Request):
     """Update user profile"""
-    current_user = await get_current_user()
+    current_user = await get_current_user(request)
     if not current_user:
         raise HTTPException(status_code=401, detail="Not authenticated")
     
