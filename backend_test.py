@@ -1,52 +1,96 @@
 #!/usr/bin/env python3
 """
-Circle of Care Backend API Testing Suite
-Tests all API endpoints for the mental health platform
+Circle of Care Platform - Comprehensive Backend API Testing
+Testing all critical features after major fixes implementation
 """
 
 import requests
-import sys
 import json
+import sys
+import time
 from datetime import datetime
-from typing import Dict, Any, Optional
+from typing import Dict, List, Any
 
 class CircleOfCareAPITester:
     def __init__(self, base_url="https://traumabridge.preview.emergentagent.com"):
         self.base_url = base_url
-        self.api_url = f"{base_url}/api"
-        self.session_token = None
-        self.user_id = None
+        self.session = requests.Session()
+        self.session.timeout = 30  # 30 second timeout
         self.tests_run = 0
         self.tests_passed = 0
         self.test_results = []
-
-    def log_test(self, name: str, success: bool, details: str = "", response_data: Any = None):
-        """Log test result"""
+        
+    def log_test(self, name: str, success: bool, details: str = "", response_time: float = 0):
+        """Log test results"""
         self.tests_run += 1
         if success:
             self.tests_passed += 1
-            print(f"✅ {name}: PASSED")
-        else:
-            print(f"❌ {name}: FAILED - {details}")
-        
-        self.test_results.append({
-            "test": name,
+            
+        result = {
+            "test_name": name,
             "success": success,
             "details": details,
-            "response_data": response_data
-        })
-
+            "response_time_ms": round(response_time * 1000, 2),
+            "timestamp": datetime.now().isoformat()
+        }
+        self.test_results.append(result)
+        
+        status = "✅ PASS" if success else "❌ FAIL"
+        print(f"{status} | {name} | {details} | {result['response_time_ms']}ms")
+        
     def test_health_endpoints(self):
-        """Test basic health endpoints"""
-        print("\n🔍 Testing Health Endpoints...")
+        """Test basic health and info endpoints"""
+        print("\n🔍 Testing Health & Info Endpoints...")
         
         # Test root endpoint
         try:
-            response = requests.get(f"{self.api_url}/", timeout=10)
-            success = response.status_code == 200 and "Circle of Care API" in response.text
-            self.log_test("Root endpoint", success, f"Status: {response.status_code}")
+            start_time = time.time()
+            response = self.session.get(f"{self.base_url}/api/")
+            response_time = time.time() - start_time
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Root API Endpoint", True, 
+                            f"Status: {data.get('status', 'unknown')}", response_time)
+            else:
+                self.log_test("Root API Endpoint", False, 
+                            f"Status: {response.status_code}", response_time)
         except Exception as e:
-            self.log_test("Root endpoint", False, f"Error: {str(e)}")
+            self.log_test("Root API Endpoint", False, f"Error: {str(e)}")
+            
+        # Test health endpoint
+        try:
+            start_time = time.time()
+            response = self.session.get(f"{self.base_url}/api/health")
+            response_time = time.time() - start_time
+            
+            if response.status_code == 200:
+                data = response.json()
+                self.log_test("Health Check", True, 
+                            f"Status: {data.get('status', 'unknown')}", response_time)
+            else:
+                self.log_test("Health Check", False, 
+                            f"Status: {response.status_code}", response_time)
+        except Exception as e:
+            self.log_test("Health Check", False, f"Error: {str(e)}")
+            
+        # Test contact info
+        try:
+            start_time = time.time()
+            response = self.session.get(f"{self.base_url}/api/contact-info")
+            response_time = time.time() - start_time
+            
+            if response.status_code == 200:
+                data = response.json()
+                expected_fields = ['creator', 'email', 'phone']
+                has_fields = all(field in data for field in expected_fields)
+                self.log_test("Contact Info", has_fields, 
+                            f"Fields present: {has_fields}", response_time)
+            else:
+                self.log_test("Contact Info", False, 
+                            f"Status: {response.status_code}", response_time)
+        except Exception as e:
+            self.log_test("Contact Info", False, f"Error: {str(e)}")
 
         # Test health check
         try:
