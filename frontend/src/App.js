@@ -956,19 +956,34 @@ const Dashboard = () => {
             {selectedCommunity && (
               <Card data-testid="community-posts-section">
                 <CardHeader>
-                  <CardTitle>{selectedCommunity.name}</CardTitle>
-                  <CardDescription>
-                    {selectedCommunity.description}
-                    <div className="mt-2 text-xs text-slate-500">
-                      Community Guidelines: {selectedCommunity.rules?.slice(0, 2).join(' • ')}
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <CardTitle>{selectedCommunity.name}</CardTitle>
+                      <CardDescription>
+                        {selectedCommunity.description}
+                        <div className="mt-2 text-xs text-slate-500">
+                          Community Guidelines: {selectedCommunity.rules?.slice(0, 2).join(' • ')}
+                        </div>
+                      </CardDescription>
                     </div>
-                  </CardDescription>
+                    <Button 
+                      onClick={() => setShowCreatePost(true)}
+                      className="bg-emerald-500 hover:bg-emerald-600 text-white"
+                      data-testid="create-post-btn"
+                    >
+                      Create Post
+                    </Button>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   {posts.length === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-slate-500">No posts yet. Be the first to share your story or ask for support.</p>
-                      <Button className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white">
+                      <Button 
+                        onClick={() => setShowCreatePost(true)}
+                        className="mt-4 bg-emerald-500 hover:bg-emerald-600 text-white"
+                        data-testid="first-post-btn"
+                      >
                         Create First Post
                       </Button>
                     </div>
