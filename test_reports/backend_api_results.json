@@ -1,0 +1,81 @@
+{
+  "test_summary": {
+    "total_tests": 10,
+    "passed_tests": 9,
+    "failed_tests": 1,
+    "success_rate": "90.0%",
+    "test_timestamp": "2025-09-24T23:49:08.542341"
+  },
+  "detailed_results": [
+    {
+      "test_name": "Root API Endpoint",
+      "success": true,
+      "details": "Status: healthy",
+      "response_time_ms": 69.65,
+      "timestamp": "2025-09-24T23:48:58.442784"
+    },
+    {
+      "test_name": "Health Check",
+      "success": true,
+      "details": "Status: healthy",
+      "response_time_ms": 48.88,
+      "timestamp": "2025-09-24T23:48:58.491718"
+    },
+    {
+      "test_name": "Contact Info",
+      "success": true,
+      "details": "Fields present: True",
+      "response_time_ms": 9.66,
+      "timestamp": "2025-09-24T23:48:58.501428"
+    },
+    {
+      "test_name": "Get All Communities",
+      "success": true,
+      "details": "Found 6 communities, all 6 expected: True",
+      "response_time_ms": 9.62,
+      "timestamp": "2025-09-24T23:48:58.511123"
+    },
+    {
+      "test_name": "Community Structure",
+      "success": true,
+      "details": "Required fields present: True",
+      "response_time_ms": 0,
+      "timestamp": "2025-09-24T23:48:58.511152"
+    },
+    {
+      "test_name": "Community Guidelines",
+      "success": true,
+      "details": "Rules count: 6",
+      "response_time_ms": 0,
+      "timestamp": "2025-09-24T23:48:58.511160"
+    },
+    {
+      "test_name": "Anonymous Post Creation",
+      "success": true,
+      "details": "Post ID: 326a051c-f38c-4006-ab06-b056981877b1",
+      "response_time_ms": 11.59,
+      "timestamp": "2025-09-24T23:48:58.522793"
+    },
+    {
+      "test_name": "Get Community Posts",
+      "success": true,
+      "details": "Found 4 posts in PTSD Recovery Room",
+      "response_time_ms": 8.96,
+      "timestamp": "2025-09-24T23:48:58.531835"
+    },
+    {
+      "test_name": "Post Structure",
+      "success": true,
+      "details": "Required fields present: True",
+      "response_time_ms": 0,
+      "timestamp": "2025-09-24T23:48:58.531865"
+    },
+    {
+      "test_name": "AI Panic Button",
+      "success": false,
+      "details": "Request timed out (still broken)",
+      "response_time_ms": 0,
+      "timestamp": "2025-09-24T23:49:08.542294"
+    }
+  ]
+}
