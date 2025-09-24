@@ -612,7 +612,7 @@ async def panic_button(panic_request: PanicButtonRequest):
             # Set a short timeout for AI response to ensure immediate help
             ai_response = await asyncio.wait_for(
                 chat.send_message(user_message), 
-                timeout=5.0  # 5 second timeout
+                timeout=3.0  # Reduced from 5 to 3 seconds
             )
             emergency_response["ai_guidance"] = ai_response
             
