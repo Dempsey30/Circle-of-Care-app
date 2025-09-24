@@ -361,30 +361,9 @@ async def panic_button(panic_request: PanicButtonRequest):
         
         immediate_response = immediate_responses.get(panic_request.severity, immediate_responses["moderate"])
         
-        # Generate personalized follow-up with AI
-        system_message = f"""CRISIS SUPPORT MODE: A user with {panic_request.severity} distress has activated the panic button. They described: {panic_request.trigger_description or 'general distress'}.
-
-        Your response should:
-        1. Acknowledge their courage
-        2. Provide immediate grounding techniques
-        3. Offer specific coping strategies
-        4. Reassure them of safety
-        5. Be calm, clear, and supportive
-        
-        Keep response under 150 words for immediate consumption."""
-        
-        chat = LlmChat(
-            api_key=os.environ['EMERGENT_LLM_KEY'],
-            session_id=f"panic_{panic_request.user_id}_{uuid.uuid4()}",
-            system_message=system_message
-        ).with_model("openai", "gpt-5")
-        
-        user_message = UserMessage(text=f"I'm feeling {panic_request.severity} distress. {panic_request.trigger_description or ''}")
-        ai_response = await chat.send_message(user_message)
-        
-        return {
+        # Emergency contacts and grounding techniques (always available)
+        emergency_response = {
             "immediate_response": immediate_response,
-            "ai_guidance": ai_response,
             "emergency_contacts": [
                 {"name": "Crisis Text Line", "contact": "Text HOME to 741741"},
                 {"name": "National Suicide Prevention Lifeline", "contact": "988"},
@@ -397,15 +376,57 @@ async def panic_button(panic_request: PanicButtonRequest):
             ]
         }
         
+        # Try to get AI guidance with timeout protection
+        try:
+            system_message = f"""CRISIS SUPPORT MODE: A user with {panic_request.severity} distress has activated the panic button. They described: {panic_request.trigger_description or 'general distress'}.
+
+            Your response should:
+            1. Acknowledge their courage
+            2. Provide immediate grounding techniques
+            3. Offer specific coping strategies
+            4. Reassure them of safety
+            5. Be calm, clear, and supportive
+            
+            Keep response under 150 words for immediate consumption."""
+            
+            chat = LlmChat(
+                api_key=os.environ['EMERGENT_LLM_KEY'],
+                session_id=f"panic_{panic_request.user_id}_{uuid.uuid4()}",
+                system_message=system_message
+            ).with_model("openai", "gpt-5")
+            
+            user_message = UserMessage(text=f"I'm feeling {panic_request.severity} distress. {panic_request.trigger_description or ''}")
+            
+            # Set a short timeout for AI response to ensure immediate help
+            import asyncio
+            ai_response = await asyncio.wait_for(
+                chat.send_message(user_message), 
+                timeout=5.0  # 5 second timeout
+            )
+            emergency_response["ai_guidance"] = ai_response
+            
+        except asyncio.TimeoutError:
+            logging.warning("AI response timeout during panic button - using fallback")
+            emergency_response["ai_guidance"] = "You are safe. Focus on your breathing. This moment will pass. You are stronger than you know."
+        except Exception as ai_error:
+            logging.error(f"AI error during panic: {ai_error}")
+            emergency_response["ai_guidance"] = "You are safe. Focus on your breathing. This moment will pass. You are stronger than you know."
+        
+        return emergency_response
+        
     except Exception as e:
-        logging.error(f"Panic button error: {e}")
-        # Fallback response if AI fails
+        logging.error(f"Critical panic button error: {e}")
+        # Always return immediate help even if everything fails
         return {
-            "immediate_response": immediate_responses.get(panic_request.severity, immediate_responses["moderate"]),
-            "ai_guidance": "You are safe. Focus on your breathing. This moment will pass. You are stronger than you know.",
+            "immediate_response": "You are safe. Take slow, deep breaths. This moment will pass. You are stronger than you know.",
+            "ai_guidance": "Focus on grounding yourself. You reached out for help, and that shows incredible strength.",
             "emergency_contacts": [
                 {"name": "Crisis Text Line", "contact": "Text HOME to 741741"},
                 {"name": "National Suicide Prevention Lifeline", "contact": "988"}
+            ],
+            "grounding_techniques": [
+                "5-4-3-2-1 grounding: Name 5 things you see, 4 you touch, 3 you hear, 2 you smell, 1 you taste",
+                "Box breathing: Breathe in for 4, hold for 4, out for 4, hold for 4"
             ]
         }
 
