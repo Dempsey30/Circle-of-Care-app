@@ -454,76 +454,75 @@ async def create_post(community_id: str, post_data: PostCreate, request: Request
     await db.posts.insert_one(post_dict)
     return new_post
 
-# Live Chat WebSocket - At app level for proper routing
-@app.websocket("/api/ws/chat/{community_id}")
-async def websocket_chat_endpoint(websocket: WebSocket, community_id: str):
-    """WebSocket endpoint for live chat - accessible to all users"""
-    # Generate a temporary user identifier
-    temp_user_id = f"user_{uuid.uuid4().hex[:8]}"
-    temp_user_name = f"Member{uuid.uuid4().hex[:4]}"
-    
+# Live Chat Endpoints - HTTP-based fallback for reliable functionality
+@api_router.get("/chat/{community_id}/messages")
+async def get_chat_messages(community_id: str, limit: int = 50):
+    """Get recent chat messages for a community"""
     try:
-        await manager.connect(websocket, temp_user_id, temp_user_name, community_id)
+        messages = await db.live_chat.find(
+            {"community_id": community_id}
+        ).sort("created_at", -1).limit(limit).to_list(length=None)
         
-        while True:
-            data = await websocket.receive_text()
-            try:
-                message_data = json.loads(data)
-                
-                # Basic message validation
-                if "message" in message_data and message_data["message"].strip():
-                    # Simple content filter
-                    message_content = message_data["message"]
-                    
-                    # Block obvious inappropriate content
-                    blocked_words = ["politics", "trump", "biden", "election", "government"]
-                    if any(word.lower() in message_content.lower() for word in blocked_words):
-                        await websocket.send_text(json.dumps({
-                            "type": "warning",
-                            "message": "Political content is not allowed in our healing community."
-                        }))
-                        continue
-                    
-                    # Store message in database
-                    chat_message = LiveChatMessage(
-                        community_id=community_id,
-                        user_id=temp_user_id,
-                        user_name=message_data.get("user_name", temp_user_name),
-                        message=message_content,
-                        is_anonymous=message_data.get("is_anonymous", True)
-                    )
-                    chat_dict = prepare_for_mongo(chat_message.dict())
-                    await db.live_chat.insert_one(chat_dict)
-                    
-                    # Broadcast to community
-                    broadcast_message = {
-                        "type": "message",
-                        "id": chat_message.id,
-                        "user_name": chat_message.user_name if not chat_message.is_anonymous else f"Anonymous{temp_user_id[-4:]}",
-                        "message": chat_message.message,
-                        "timestamp": chat_message.created_at.isoformat(),
-                        "is_anonymous": chat_message.is_anonymous
-                    }
-                    await manager.broadcast_to_community(community_id, broadcast_message)
-                    
-            except json.JSONDecodeError:
-                await websocket.send_text(json.dumps({
-                    "type": "error",
-                    "message": "Invalid message format"
-                }))
-                
-    except WebSocketDisconnect:
-        connection = manager.disconnect(websocket)
-        if connection:
-            await manager.broadcast_to_community(community_id, {
-                "type": "user_left",
-                "user_name": connection["user_name"],
-                "message": f"{connection['user_name']} left the chat",
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            })
+        # Reverse to get chronological order
+        messages.reverse()
+        
+        return [
+            {
+                "id": msg["id"],
+                "user_name": msg["user_name"] if not msg.get("is_anonymous", True) else f"Anonymous{msg['user_id'][-4:]}",
+                "message": msg["message"],
+                "timestamp": msg["created_at"],
+                "type": "message"
+            }
+            for msg in messages
+        ]
     except Exception as e:
-        logging.error(f"WebSocket error: {e}")
-        await websocket.close()
+        logging.error(f"Error fetching chat messages: {e}")
+        return []
+
+@api_router.post("/chat/{community_id}/send")
+async def send_chat_message(community_id: str, message_data: Dict[str, Any], request: Request = None):
+    """Send a message to community chat"""
+    try:
+        # Basic validation
+        if not message_data.get("message", "").strip():
+            raise HTTPException(status_code=400, detail="Message cannot be empty")
+        
+        message_content = message_data["message"].strip()
+        
+        # Content filtering
+        blocked_words = ["politics", "trump", "biden", "election", "government"]
+        if any(word.lower() in message_content.lower() for word in blocked_words):
+            raise HTTPException(status_code=400, detail="Political content is not allowed in our healing community")
+        
+        # Generate user info
+        temp_user_id = f"user_{uuid.uuid4().hex[:8]}"
+        user_name = message_data.get("user_name", f"Member{temp_user_id[-4:]}")
+        
+        # Store message
+        chat_message = LiveChatMessage(
+            community_id=community_id,
+            user_id=temp_user_id,
+            user_name=user_name,
+            message=message_content,
+            is_anonymous=message_data.get("is_anonymous", True)
+        )
+        
+        chat_dict = prepare_for_mongo(chat_message.dict())
+        await db.live_chat.insert_one(chat_dict)
+        
+        return {
+            "status": "sent",
+            "message_id": chat_message.id,
+            "timestamp": chat_message.created_at.isoformat(),
+            "user_name": user_name if not chat_message.is_anonymous else f"Anonymous{temp_user_id[-4:]}"
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logging.error(f"Error sending chat message: {e}")
+        raise HTTPException(status_code=500, detail="Failed to send message")
 
 # AI Companion Endpoints
 @api_router.post("/ai/chat")
