@@ -657,9 +657,9 @@ const Dashboard = () => {
       console.error('Error loading posts:', error);
     }
 
-    // Automatically connect to live chat for this community
+    // Start chat polling for this community
     setTimeout(() => {
-      connectLiveChat(community.id);
+      startChatPolling(community.id);
     }, 500); // Small delay to ensure UI updates first
   };
 
