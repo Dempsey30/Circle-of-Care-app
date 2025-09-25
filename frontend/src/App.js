@@ -906,38 +906,23 @@ const Dashboard = () => {
                     {liveChatHistory.length === 0 ? (
                       <div className="text-center text-slate-500 py-4">
                         <MessageCircle className="h-8 w-8 mx-auto mb-2 text-slate-400" />
-                        <p>Welcome to live chat! Click "Connect" to join the conversation.</p>
+                        <p>Welcome to live chat! Messages will appear here when sent.</p>
                       </div>
                     ) : (
                       liveChatHistory.map((msg, index) => (
-                        <div key={index} className={`text-sm ${
-                          msg.type === 'system' ? 'text-center text-slate-500 italic' : 
-                          msg.type === 'error' ? 'text-center text-red-500' : 
-                          msg.type === 'warning' ? 'bg-yellow-100 p-2 rounded text-yellow-800' : ''
-                        }`}>
-                          {msg.type === 'message' && (
-                            <div className="flex items-start space-x-2">
-                              <Avatar className="h-6 w-6">
-                                <AvatarFallback className="text-xs">{msg.user_name?.[0] || 'A'}</AvatarFallback>
-                              </Avatar>
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2">
-                                  <span className="font-medium text-slate-700">{msg.user_name || 'Anonymous'}:</span>
-                                  <span className="text-xs text-slate-400">{new Date(msg.timestamp).toLocaleTimeString()}</span>
-                                </div>
-                                <p className="text-slate-600 mt-1">{msg.message}</p>
+                        <div key={index} className="text-sm">
+                          <div className="flex items-start space-x-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback className="text-xs">{msg.user_name?.[0] || 'A'}</AvatarFallback>
+                            </Avatar>
+                            <div className="flex-1">
+                              <div className="flex items-center space-x-2">
+                                <span className="font-medium text-slate-700">{msg.user_name || 'Anonymous'}:</span>
+                                <span className="text-xs text-slate-400">{new Date(msg.timestamp).toLocaleTimeString()}</span>
                               </div>
+                              <p className="text-slate-600 mt-1">{msg.message}</p>
                             </div>
-                          )}
-                          {(msg.type === 'system' || msg.type === 'error') && (
-                            <p className="py-1">{msg.message}</p>
-                          )}
-                          {msg.type === 'warning' && (
-                            <div className="font-medium">
-                              <Flag className="h-4 w-4 inline mr-2" />
-                              {msg.message}
-                            </div>
-                          )}
+                          </div>
                         </div>
                       ))
                     )}
