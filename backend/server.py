@@ -732,6 +732,16 @@ async def root():
 async def health_check():
     return {"status": "healthy", "timestamp": datetime.now(timezone.utc).isoformat(), "monitoring": "active"}
 
+@api_router.get("/contact-info")
+async def get_contact_info():
+    return {
+        "creator": "Brent Dempsey",
+        "email": "circleofcaresupport@pm.me",
+        "phone": "250-902-9869",
+        "support": "24/7 monitoring and support available",
+        "security": "Platform monitored 24/7 for safety and security"
+    }
+
 @api_router.get("/ws-test/{community_id}")
 async def test_ws_route(community_id: str):
     """Test endpoint to verify routing is working"""
