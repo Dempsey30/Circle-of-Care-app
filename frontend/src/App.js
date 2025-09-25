@@ -891,12 +891,12 @@ const Dashboard = () => {
                       <CardDescription>Connect with peers in {selectedCommunity.name} • Monitored 24/7</CardDescription>
                     </div>
                     <Button
-                      onClick={() => connectLiveChat(selectedCommunity.id)}
+                      onClick={() => startChatPolling(selectedCommunity.id)}
                       variant="outline"
                       size="sm"
                       className="border-emerald-300 text-emerald-700 hover:bg-emerald-50"
                     >
-                      {websocket ? 'Reconnect' : 'Connect'}
+                      {chatPollingInterval ? 'Refresh' : 'Start Chat'}
                     </Button>
                   </div>
                 </CardHeader>
