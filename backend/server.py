@@ -454,8 +454,8 @@ async def create_post(community_id: str, post_data: PostCreate, request: Request
     await db.posts.insert_one(post_dict)
     return new_post
 
-# Live Chat WebSocket - Simplified for better functionality
-@app.websocket("/ws/chat/{community_id}")
+# Live Chat WebSocket - Moved to API router
+@api_router.websocket("/ws/chat/{community_id}")
 async def websocket_endpoint(websocket: WebSocket, community_id: str):
     """Simplified WebSocket for live chat - accessible to all users"""
     # Generate a temporary user identifier
