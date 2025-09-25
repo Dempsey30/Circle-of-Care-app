@@ -933,15 +933,14 @@ const Dashboard = () => {
                     <Input
                       value={liveChatMessage}
                       onChange={(e) => setLiveChatMessage(e.target.value)}
-                      placeholder={websocket ? "Type your message to the community..." : "Click Connect to join the chat"}
+                      placeholder="Type your message to the community..."
                       onKeyPress={(e) => e.key === 'Enter' && sendLiveChatMessage()}
                       data-testid="live-chat-input"
                       className="flex-1"
-                      disabled={!websocket}
                     />
                     <Button 
                       onClick={sendLiveChatMessage} 
-                      disabled={!websocket || !liveChatMessage.trim()}
+                      disabled={!liveChatMessage.trim()}
                       data-testid="send-live-chat-btn"
                       className="bg-emerald-500 hover:bg-emerald-600 text-white"
                     >
