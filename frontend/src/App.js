@@ -663,19 +663,7 @@ const Dashboard = () => {
     }, 500); // Small delay to ensure UI updates first
   };
 
-  const sendLiveChatMessage = () => {
-    if (websocket && liveChatMessage.trim()) {
-      const messageData = {
-        message: liveChatMessage,
-        user_name: user?.display_name || user?.name || 'Anonymous',
-        is_anonymous: false
-      };
-      
-      console.log('Sending message:', messageData);
-      websocket.send(JSON.stringify(messageData));
-      setLiveChatMessage("");
-    }
-  };
+  const sendLiveChatMessage = sendChatMessage;
 
   const createNewPost = async () => {
     if (!selectedCommunity || !newPostTitle.trim() || !newPostContent.trim()) {
