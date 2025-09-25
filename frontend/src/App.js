@@ -592,11 +592,18 @@ const Dashboard = () => {
       websocket.close();
     }
 
-    // Use the correct WebSocket URL format
+    // Use the correct WebSocket URL format with API prefix
     const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
     const wsHost = window.location.hostname;
-    const wsPort = window.location.protocol === 'https:' ? '443' : '3000';
-    const wsUrl = `${wsProtocol}//${wsHost}:${wsPort}/ws/chat/${communityId}`;
+    let wsUrl;
+    
+    if (window.location.hostname === 'localhost') {
+      // Development
+      wsUrl = `${wsProtocol}//${wsHost}:8001/api/ws/chat/${communityId}`;
+    } else {
+      // Production - use the same host but with API path
+      wsUrl = `${wsProtocol}//${wsHost}/api/ws/chat/${communityId}`;
+    }
     
     console.log('Connecting to WebSocket:', wsUrl);
     
@@ -607,7 +614,7 @@ const Dashboard = () => {
       setWebsocket(ws);
       setLiveChatHistory(prev => [...prev, {
         type: 'system',
-        message: 'Connected to live chat! Welcome to the community.',
+        message: '🟢 Connected to live chat! Welcome to the community.',
         timestamp: new Date().toISOString()
       }]);
     };
@@ -621,12 +628,12 @@ const Dashboard = () => {
       }
     };
     
-    ws.onclose = () => {
-      console.log('Disconnected from live chat');
+    ws.onclose = (event) => {
+      console.log('Disconnected from live chat', event);
       setWebsocket(null);
       setLiveChatHistory(prev => [...prev, {
         type: 'system',
-        message: 'Disconnected from chat. Click "Live Chat" to reconnect.',
+        message: '🔴 Disconnected from chat. Click "Connect" to reconnect.',
         timestamp: new Date().toISOString()
       }]);
     };
@@ -635,7 +642,7 @@ const Dashboard = () => {
       console.error('WebSocket error:', error);
       setLiveChatHistory(prev => [...prev, {
         type: 'error',
-        message: 'Chat connection error. Trying to reconnect...',
+        message: '⚠️ Chat connection error. Trying to reconnect...',
         timestamp: new Date().toISOString()
       }]);
     };
