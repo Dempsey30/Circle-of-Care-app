@@ -454,17 +454,17 @@ async def create_post(community_id: str, post_data: PostCreate, request: Request
     await db.posts.insert_one(post_dict)
     return new_post
 
-# Live Chat WebSocket - Moved to API router
-@api_router.websocket("/ws/chat/{community_id}")
-async def websocket_endpoint(websocket: WebSocket, community_id: str):
-    """Simplified WebSocket for live chat - accessible to all users"""
+# Live Chat WebSocket - At app level for proper routing
+@app.websocket("/api/ws/chat/{community_id}")
+async def websocket_chat_endpoint(websocket: WebSocket, community_id: str):
+    """WebSocket endpoint for live chat - accessible to all users"""
     # Generate a temporary user identifier
     temp_user_id = f"user_{uuid.uuid4().hex[:8]}"
     temp_user_name = f"Member{uuid.uuid4().hex[:4]}"
     
-    await manager.connect(websocket, temp_user_id, temp_user_name, community_id)
-    
     try:
+        await manager.connect(websocket, temp_user_id, temp_user_name, community_id)
+        
         while True:
             data = await websocket.receive_text()
             try:
@@ -521,6 +521,9 @@ async def websocket_endpoint(websocket: WebSocket, community_id: str):
                 "message": f"{connection['user_name']} left the chat",
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
+    except Exception as e:
+        logging.error(f"WebSocket error: {e}")
+        await websocket.close()
 
 # AI Companion Endpoints
 @api_router.post("/ai/chat")
