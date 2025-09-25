@@ -586,66 +586,64 @@ const Dashboard = () => {
     }
   }, [user]);
 
-  // Live chat WebSocket connection
-  const connectLiveChat = (communityId) => {
-    if (websocket) {
-      websocket.close();
+  // HTTP-based chat system (more reliable than WebSocket)
+  const [chatPollingInterval, setChatPollingInterval] = useState(null);
+
+  const startChatPolling = (communityId) => {
+    // Stop any existing polling
+    if (chatPollingInterval) {
+      clearInterval(chatPollingInterval);
     }
 
-    // Use the correct WebSocket URL format with API prefix
-    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsHost = window.location.hostname;
-    let wsUrl;
-    
-    if (window.location.hostname === 'localhost') {
-      // Development
-      wsUrl = `${wsProtocol}//${wsHost}:8001/api/ws/chat/${communityId}`;
-    } else {
-      // Production - use the same host but with API path
-      wsUrl = `${wsProtocol}//${wsHost}/api/ws/chat/${communityId}`;
+    // Load initial messages
+    loadChatMessages(communityId);
+
+    // Set up polling for new messages
+    const interval = setInterval(() => {
+      loadChatMessages(communityId);
+    }, 3000); // Poll every 3 seconds
+
+    setChatPollingInterval(interval);
+  };
+
+  const stopChatPolling = () => {
+    if (chatPollingInterval) {
+      clearInterval(chatPollingInterval);
+      setChatPollingInterval(null);
     }
-    
-    console.log('Connecting to WebSocket:', wsUrl);
-    
-    const ws = new WebSocket(wsUrl);
-    
-    ws.onopen = () => {
-      console.log('Connected to live chat');
-      setWebsocket(ws);
-      setLiveChatHistory(prev => [...prev, {
-        type: 'system',
-        message: '🟢 Connected to live chat! Welcome to the community.',
-        timestamp: new Date().toISOString()
-      }]);
-    };
-    
-    ws.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data);
-        setLiveChatHistory(prev => [...prev, message]);
-      } catch (e) {
-        console.error('Failed to parse WebSocket message:', e);
+  };
+
+  const loadChatMessages = async (communityId) => {
+    try {
+      const response = await axios.get(`${API}/chat/${communityId}/messages?limit=20`);
+      setLiveChatHistory(response.data || []);
+    } catch (error) {
+      console.error('Error loading chat messages:', error);
+    }
+  };
+
+  const sendChatMessage = async () => {
+    if (!selectedCommunity || !liveChatMessage.trim()) return;
+
+    try {
+      const messageData = {
+        message: liveChatMessage,
+        user_name: user?.display_name || user?.name || 'Anonymous',
+        is_anonymous: !user
+      };
+
+      await axios.post(`${API}/chat/${selectedCommunity.id}/send`, messageData);
+      setLiveChatMessage("");
+      
+      // Immediately refresh messages
+      loadChatMessages(selectedCommunity.id);
+      
+    } catch (error) {
+      console.error('Error sending message:', error);
+      if (error.response?.data?.detail) {
+        alert(`Message blocked: ${error.response.data.detail}`);
       }
-    };
-    
-    ws.onclose = (event) => {
-      console.log('Disconnected from live chat', event);
-      setWebsocket(null);
-      setLiveChatHistory(prev => [...prev, {
-        type: 'system',
-        message: '🔴 Disconnected from chat. Click "Connect" to reconnect.',
-        timestamp: new Date().toISOString()
-      }]);
-    };
-    
-    ws.onerror = (error) => {
-      console.error('WebSocket error:', error);
-      setLiveChatHistory(prev => [...prev, {
-        type: 'error',
-        message: '⚠️ Chat connection error. Trying to reconnect...',
-        timestamp: new Date().toISOString()
-      }]);
-    };
+    }
   };
 
   const handleCommunitySelect = async (community) => {
